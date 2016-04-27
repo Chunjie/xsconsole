@@ -16,8 +16,6 @@
 from XSConsoleConfig import *
 from XSConsoleLangErrors import *
 
-import XenAPI # For XenAPI.Failure
-
 
 # Global function
 def Lang(inLabel, inPad = 0):
@@ -76,10 +74,10 @@ class Language:
 
     @classmethod
     def ToString(cls, inLabel):
-        if isinstance(inLabel, XenAPI.Failure):
-            retVal = cls.XapiError(inLabel.details)
-            cls.LogError(retVal)
-        elif isinstance(inLabel, Exception):
+        #if isinstance(inLabel, XenAPI.Failure):
+        #    retVal = cls.XapiError(inLabel.details)
+        #    cls.LogError(retVal)
+        if isinstance(inLabel, Exception):
             exn_strings = []
             for arg in inLabel.args:
                 if isinstance(arg, unicode):

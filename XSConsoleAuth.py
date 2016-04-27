@@ -22,8 +22,6 @@ from XSConsoleLog import *
 from XSConsoleState import *
 from XSConsoleUtils import *
 
-import XenAPI
-
 class Auth:
     instance = None
     
