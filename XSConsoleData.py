@@ -1054,17 +1054,17 @@ class Data:
             retVal = False
         return retVal
         
-    def StopXAPI(self):
-        if self.IsXAPIRunning():
-            State.Inst().WeStoppedXAPISet(True)
-            State.Inst().SaveIfRequired()        
-            ShellPipe('/etc/init.d/xapi', 'stop').Call()
-                
-    def StartXAPI(self):
-        if not self.IsXAPIRunning():
-            ShellPipe('/etc/init.d/xapi', 'start').Call()
-            State.Inst().WeStoppedXAPISet(False)
-            State.Inst().SaveIfRequired()
+    #def StopXAPI(self):
+    #    if self.IsXAPIRunning():
+    #        State.Inst().WeStoppedXAPISet(True)
+    #        State.Inst().SaveIfRequired()        
+    #        ShellPipe('/etc/init.d/xapi', 'stop').Call()
+    #            
+    #def StartXAPI(self):
+    #    if not self.IsXAPIRunning():
+    #        ShellPipe('/etc/init.d/xapi', 'start').Call()
+    #        State.Inst().WeStoppedXAPISet(False)
+    #        State.Inst().SaveIfRequired()
     
     def EnableService(self, service):
         status, output = commands.getstatusoutput("systemctl enable %s" % (service,))

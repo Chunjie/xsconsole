@@ -74,4 +74,4 @@ class XSFeatureManagementHelp:
         )
 
 # Register this plugin when module is imported
-XSFeatureManagementHelp().Register()
+# XSFeatureManagementHelp().Register()

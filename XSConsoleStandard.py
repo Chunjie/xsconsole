@@ -15,7 +15,7 @@
 
 # This is the set of imports likely to be needed by features
 
-from XSConsoleAuth import *
+#from XSConsoleAuth import *
 from XSConsoleBases import *
 from XSConsoleConfig import *
 from XSConsoleData import *
