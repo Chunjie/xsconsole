@@ -21,7 +21,7 @@ from XSConsoleLog import *
 
 class State:
     instance = None
-    savePath = '/etc/xsconsole'
+    savePath = './etc/xsconsole'
     saveLeafname = 'state.txt'
     thisVersion = 9
     
