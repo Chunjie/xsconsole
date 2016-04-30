@@ -17,6 +17,8 @@
 
 import sys, traceback
 
+sys.path.append("Ubuntu")
+
 from XSConsoleConfig import *
 from XSConsoleLang import *
 from XSConsoleLog import *

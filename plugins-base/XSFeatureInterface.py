@@ -1,18 +1,3 @@
-# Copyright (c) 2007-2009 Citrix Systems Inc.
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 only.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
 if __name__ == "__main__":
     raise Exception("This script is a plugin for xsconsole and cannot run independently")
     
@@ -21,7 +6,7 @@ from XSConsoleStandard import *
 class InterfaceDialogue(Dialogue):
     def __init__(self):
         Dialogue.__init__(self)
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         data.Update() # Pick up current 'connected' states
         choiceDefs = []
 
@@ -193,7 +178,7 @@ class InterfaceDialogue(Dialogue):
         pane.AddKeyHelpField( { Lang("<Enter>") : Lang("OK"), Lang("<Esc>") : Lang("Cancel") } )
     
     def UpdateFieldsPOSTHOSTNAME(self):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         pane = self.Pane()
         pane.ResetFields()
    
@@ -210,7 +195,7 @@ class InterfaceDialogue(Dialogue):
         pane.AddKeyHelpField( { Lang("<Enter>") : Lang("OK"), Lang("<Esc>") : Lang("Cancel") } )
     
     def UpdateFieldsNAMELABEL(self):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         pane = self.Pane()
         pane.ResetFields()
         pane.AddTitleField(Lang("Enter the ")+data.derived.app_name()+Lang(" name for this server"))
@@ -297,7 +282,7 @@ class InterfaceDialogue(Dialogue):
             try:
                 self.Commit()
                 if self.mode == 'DHCP':
-                    data = Data.Inst()
+                    data = Ubuntu1204Data.Inst()
                     self.IP = data.ManagementIP()
                     self.netmask = data.ManagementNetmask()
                     self.gateway = data.ManagementGateway()
@@ -379,7 +364,7 @@ class InterfaceDialogue(Dialogue):
             self.ChangeState('STATICIP')
 
     def HandlePostHostnameChoice(self,  inChoice):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         if inChoice == 'COPY':
             data.NameLabelSet(data.host.hostname(''))
             self.Complete() # We're done
@@ -389,7 +374,7 @@ class InterfaceDialogue(Dialogue):
             self.ChangeState('NAMELABEL')
 
     def HandleRenewChoice(self):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         pif = data.host.PIFs()[self.nic]
         
         Layout.Inst().PopDialogue()
@@ -412,7 +397,7 @@ class InterfaceDialogue(Dialogue):
             Layout.Inst().PushDialogue(InfoDialogue(Lang("Renewal Failed"), Lang(e)))
             
     def Commit(self):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         if self.nic is None:
             self.mode = None
             data.DisableManagement()
@@ -444,21 +429,21 @@ class InterfaceDialogue(Dialogue):
 class XSFeatureInterface:
     @classmethod
     def StatusUpdateHandler(cls, inPane):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         
         inPane.AddTitleField(Lang("Configure Management Interface"))
-        
+
         if len(data.derived.managementpifs([])) == 0:
             inPane.AddWrappedTextField(Lang("<No interface configured>"))
         else:
             for pif in data.derived.managementpifs([]):
                 inPane.AddStatusField(Lang('Device', 16), pif['device'])
-                inPane.AddStatusField(Lang('MAC Address', 16),  pif['MAC'])
-                inPane.AddStatusField(Lang('DHCP/Static IP', 16),  pif['ip_configuration_mode'])
+                inPane.AddStatusField(Lang('MAC Address', 16),  pif['macaddr'])
+                inPane.AddStatusField(Lang('DHCP/Static IP', 16),  pif['configmode'])
 
-                inPane.AddStatusField(Lang('IP address', 16), data.ManagementIP(''))
-                inPane.AddStatusField(Lang('Netmask', 16),  data.ManagementNetmask(''))
-                inPane.AddStatusField(Lang('Gateway', 16),  data.ManagementGateway(''))
+                inPane.AddStatusField(Lang('IP address', 16), pif['ipaddr'])
+                inPane.AddStatusField(Lang('Netmask', 16),  pif['netmask'])
+                inPane.AddStatusField(Lang('Gateway', 16),  pif['gateway'])
                 inPane.AddStatusField(Lang('Hostname', 16),  data.host.hostname(''))
                 
                 inPane.NewLine()

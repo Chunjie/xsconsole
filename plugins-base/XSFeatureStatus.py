@@ -1,18 +1,3 @@
-# Copyright (c) 2008-2009 Citrix Systems Inc.
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 only.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
 if __name__ == "__main__":
     raise Exception("This script is a plugin for xsconsole and cannot run independently")
     
@@ -21,7 +6,7 @@ from XSConsoleStandard import *
 class XSFeatureStatus:
     @classmethod
     def StatusUpdateHandler(cls, inPane):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
 
         inPane.AddWrappedTextField(data.dmi.system_manufacturer())
         inPane.AddWrappedTextField(data.dmi.system_product_name())
@@ -35,9 +20,9 @@ class XSFeatureStatus:
             inPane.AddWrappedTextField(Lang("<No network configured>"))
         else:
             inPane.AddStatusField(Lang('Device', 16), data.derived.managementpifs()[0]['device'])
-            inPane.AddStatusField(Lang('IP address', 16), data.ManagementIP(''))
-            inPane.AddStatusField(Lang('Netmask', 16),  data.ManagementNetmask(''))
-            inPane.AddStatusField(Lang('Gateway', 16),  data.ManagementGateway(''))
+            inPane.AddStatusField(Lang('IP address', 16), data.derived.managementpifs()[0]['ipaddr'])
+            inPane.AddStatusField(Lang('Netmask', 16),  data.derived.managementpifs()[0]['netmask'])
+            inPane.AddStatusField(Lang('Gateway', 16),  data.derived.managementpifs()[0]['gateway'])
         
         inPane.NewLine()
         inPane.AddWrappedTextField(Lang('Press <Enter> to display the SSL key fingerprints for this host'))
@@ -46,7 +31,7 @@ class XSFeatureStatus:
 
     @classmethod
     def ActivateHandler(cls):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         appName = data.derived.app_name('')
 
         message = ''

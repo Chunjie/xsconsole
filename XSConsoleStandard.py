@@ -33,3 +33,5 @@ from XSConsoleMenus import *
 from XSConsoleMetrics import *
 from XSConsoleTask import *
 from XSConsoleUtils import *
+
+from Ubuntu1204ConsoleData import *
