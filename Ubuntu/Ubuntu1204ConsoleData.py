@@ -183,15 +183,6 @@ class Ubuntu1204Data:
             brand = Land("<Unknown>")
         self.data['derived']['brand'] = brand
 
-    def ManagementIP(self):
-        pass
-
-    def ManagementNetmask(self):
-        pass
-
-    def ManagementGateway(self):
-        pass
-
     def Dump(self):
         pprint(self.data)
 
@@ -612,27 +603,32 @@ class Ubuntu1204Data:
         return (status == 0, "\n".join(pipe.AllOutput()))
         
     def EnableService(self, service):
-        status, output = commands.getstatusoutput("systemctl enable %s" % (service,))
+        service = Ubuntu.GetServiceName(service)
+        status, output = commands.getstatusoutput("update-rc.d %s enable" % (service,))
         if status != 0:
             raise Exception(output)
 
     def DisableService(self, service):
-        status, output = commands.getstatusoutput("systemctl disable %s" % (service,))
+        service = Ubuntu.GetServiceName(service)
+        status, output = commands.getstatusoutput("update-rc.d %s disable" % (service,))
         if status != 0:
             raise Exception(output)
 
     def RestartService(self, service):
-        status, output = commands.getstatusoutput("systemctl restart %s" % (service,))
+        service = Ubuntu.GetServiceName(service)
+        status, output = commands.getstatusoutput("/etc/init.d/%s restart" % (service,))
         if status != 0:
             raise Exception(output)
 
     def StartService(self, service):
-        status, output = commands.getstatusoutput("systemctl start %s" % (service,))
+        service = Ubuntu.GetServiceName(service)
+        status, output = commands.getstatusoutput("/etc/init.d/%s start" % (service,))
         if status != 0:
             raise Exception(output)
 
     def StopService(self, service):
-        status, output = commands.getstatusoutput("systemctl stop %s" % (service,))
+        service = Ubuntu.GetServiceName(service)
+        status, output = commands.getstatusoutput("/etc/init.d/%s stop" % (service,))
         if status != 0:
             raise Exception(output)
 

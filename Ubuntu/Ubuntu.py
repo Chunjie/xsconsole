@@ -151,5 +151,27 @@ class Ubuntu:
         return pifs
 
     @classmethod
+    def UpdateNetConf(cls, conf):
+        ifname = conf['device']
+        configmodemode = conf['configmode']
+        try:
+            f = open("/etc/network/interfaces", 'r')
+            lines = f.readlines()
+            f.close()
+
+            ifconfRE = re.compile("")
+            for line in lines:
+                if line.
+        except Exception, e:
+            pass
+
+    @classmethod
     def GetHostName(cls):
         return Util.GetHostName()
+
+    @classmethod
+    def GetServiceName(cls, orig_name):
+        real_name = orig_name
+        if orig_name == "ntpd":
+            real_name = "ntp"
+        return real_name

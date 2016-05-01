@@ -18,10 +18,7 @@ if __name__ == "__main__":
 	
 from XSConsoleStandard import *
 
-pool_conf = '%s/pool.conf' % (Config.Inst().XCPConfigDir())
 interface_reconfigure = '%s/interface-reconfigure' % (Config.Inst().LibexecPath())
-inventory_file = '/etc/xensource-inventory'
-management_conf = '/etc/firstboot.d/data/management.conf'
 network_reset = '/tmp/network-reset'
 
 def read_dict_file(fname):
@@ -32,41 +29,15 @@ def read_dict_file(fname):
 		d[kv[0]] = kv[1][1:-2]
 	return d
 
-def read_inventory():
-	return read_dict_file(inventory_file)
-
-def read_management_conf():
-	return read_dict_file(management_conf)
-
-def write_inventory(inventory):
-	f = open(inventory_file, 'w')
-	for k in inventory:
-		f.write(k + "='" + inventory[k] + "'\n")
-	f.close()
-
 class NetworkResetDialogue(Dialogue):
 	def __init__(self):
 		Dialogue.__init__(self)
-		data = Data.Inst()
+		data = Ubuntu1204Data.Inst()
 		data.Update() # Pick up current 'connected' states
 		choiceDefs = []
 
-		# Determine pool role
-		self.master_ip = None
-		try:
-			f = open(pool_conf, 'r')
-			l = f.readline()
-			ls = l.split(':')
-			if ls[0] == 'slave':
-				self.master_ip = ls[1]
-		finally:
-			f.close()
-
-		try:
-			conf = read_management_conf()
-			self.device = conf['LABEL']
-		except:
-			self.device = "eth0"
+		# Determine primary NIC interface
+		self.device = data.derived.managementpifs()[0]['device']
 
 		self.modeMenu = Menu(self, None, Lang("Select IP Address Configuration Mode"), [
 			ChoiceDef(Lang("DHCP"), lambda: self.HandleModeChoice('DHCP') ),
@@ -92,20 +63,17 @@ class NetworkResetDialogue(Dialogue):
 		pane.ResetFields()
 		
 		pane.AddTitleField(Lang("!! WARNING !!"))
-		pane.AddWrappedTextField(Lang("This command will reboot the host and reset its network configuration."))
+		pane.AddWrappedTextField(Lang("This command will reset its network configuration."))
 		pane.NewLine()
-		pane.AddWrappedTextField(Lang("As part of this utility, VMs running on this host will be forcefully shutdown."))
+		pane.AddWrappedTextField(Lang("Any active network connection might be impacted."))
 		pane.NewLine()
-		pane.AddWrappedTextField(Lang("Before continuing:"))
-		pane.AddWrappedTextField(Lang("- Where possible, cleanly shutdown VMs."))
-		pane.AddWrappedTextField(Lang("- Disable HA if this host is part of a resource pool with HA enabled."))
 		pane.AddKeyHelpField( { Lang("<Enter>") : Lang("Continue"), Lang("<Esc>") : Lang("Cancel") } )
 
 	def UpdateFieldsDEVICE(self):
 		pane = self.Pane()
 		pane.ResetFields()
 		
-		pane.AddTitleField(Lang("Enter the Primary Management Interface to be used after reset"))
+		pane.AddTitleField(Lang("Enter the Primary Network Interface to be used after reset"))
 		pane.AddInputField(Lang("Device name",  14),  self.device, 'device')
 		pane.AddKeyHelpField( { Lang("<Enter>") : Lang("OK"), Lang("<Esc>") : Lang("Cancel") } )
 		if pane.InputIndex() is None:
@@ -119,18 +87,6 @@ class NetworkResetDialogue(Dialogue):
 		pane.AddMenuField(self.modeMenu)
 		pane.AddKeyHelpField( { Lang("<Enter>") : Lang("OK"), Lang("<Esc>") : Lang("Cancel") } )
 
-	def UpdateFieldsMASTERIP(self):
-		pane = self.Pane()
-		pane.ResetFields()
-		pane.AddTitleField(Lang("Specify Pool Master's IP Address"))
-		pane.AddWrappedTextField(Lang("The host is a pool slave."))
-		pane.AddWrappedTextField(Lang("Please confirm or correct the IP address of the pool master."))
-		pane.NewLine()				
-		pane.AddInputField(Lang("IP Address",  14),  self.master_ip, 'master_ip')		
-		pane.AddKeyHelpField( { Lang("<Enter>") : Lang("OK"), Lang("<Esc>") : Lang("Cancel") } )
-		if pane.CurrentInput() is None:
-			pane.InputIndexSet(0)
-				
 	def UpdateFieldsSTATICIP(self):
 		pane = self.Pane()
 		pane.ResetFields()
@@ -202,27 +158,6 @@ class NetworkResetDialogue(Dialogue):
 	def HandleKeyMODE(self, inKey):
 		return self.modeMenu.HandleKey(inKey)
 
-	def HandleKeyMASTERIP(self, inKey):
-		handled = True
-		pane = self.Pane()
-		if pane.CurrentInput() is None:
-			pane.InputIndexSet(0)
-		if inKey == 'KEY_ENTER':
-			inputValues = pane.GetFieldValues()
-			self.master_ip = inputValues['master_ip']
-			try:
-				failedName = Lang('Master IP')
-				IPUtils.AssertValidIP(self.master_ip)
-				self.ChangeState('PRECOMMIT')
-			except:
-				pane.InputIndexSet(None)
-				Layout.Inst().PushDialogue(InfoDialogue(Lang('Invalid ')+failedName))
-		elif pane.CurrentInput().HandleKey(inKey):
-			pass # Leave handled as True
-		else:
-			handled = False
-		return handled
-		
 	def HandleKeySTATICIP(self, inKey):
 		handled = True
 		pane = self.Pane()
@@ -242,10 +177,7 @@ class NetworkResetDialogue(Dialogue):
 					IPUtils.AssertValidIP(self.gateway)
 					failedName = Lang('DNS Server')
 					IPUtils.AssertValidIP(self.dns)
-					if self.master_ip == None:
-						self.ChangeState('PRECOMMIT')
-					else:
-						self.ChangeState('MASTERIP')
+					self.ChangeState('PRECOMMIT')
 				except:
 					pane.InputIndexSet(None)
 					Layout.Inst().PushDialogue(InfoDialogue(Lang('Invalid ')+failedName))
@@ -290,67 +222,13 @@ class NetworkResetDialogue(Dialogue):
 	def HandleModeChoice(self,  inChoice):
 		if inChoice == 'DHCP':
 			self.mode = 'dhcp'
-			if self.master_ip == None:
-				self.ChangeState('PRECOMMIT')
-			else:
-				self.ChangeState('MASTERIP')
+			self.ChangeState('PRECOMMIT')
 		else:
 			self.mode = 'static'
 			self.ChangeState('STATICIP')
 			
 	def Commit(self):
-		# Update master's IP, if needed and given
-		if self.master_ip != None:
-			try:
-				f = open(pool_conf, 'w')
-				f.write('slave:' + self.master_ip)
-			finally:
-				f.close()
-		
-		# Construct bridge name for management interface based on convention
-		if self.device[:3] == 'eth':
-			bridge = 'xenbr' + self.device[3:]
-		else:
-			bridge = 'br' + self.device
-
-		# Ensure xapi is not running
-		os.system('service xapi stop >/dev/null 2>/dev/null')
-
-		# Reconfigure new management interface
-		if os.access('/tmp/do-not-use-networkd', os.F_OK):
-			if_args = ' --force ' + bridge + ' rewrite --mac=x --device=' + self.device + ' --mode=' + self.mode
-			if self.mode == 'static':
-				if_args += ' --ip=' + self.IP + ' --netmask=' + self.netmask
-				if self.gateway != '':
-					if_args += ' --gateway=' + self.gateway
-			os.system(interface_reconfigure + if_args + ' >/dev/null 2>/dev/null')
-		else:
-			os.system('service xcp-networkd stop >/dev/null 2>/dev/null')
-			try: os.remove('/var/xapi/networkd.db')
-			except: pass
-
-		# Update interfaces in inventory file
-		inventory = read_inventory()
-		inventory['MANAGEMENT_INTERFACE'] = bridge
-		inventory['CURRENT_INTERFACES'] = ''
-		write_inventory(inventory)
-
-		# Rewrite firstboot management.conf file, which will be picked it by xcp-networkd on restart (if used)
-		try:
-			f = file(management_conf, 'w')
-			f.write("LABEL='" + self.device + "'\n")
-			f.write("MODE='" + self.mode + "'\n")
-			if self.mode == 'static':
-				f.write("IP='" + self.IP + "'\n")
-				f.write("NETMASK='" + self.netmask + "'\n")
-				if self.gateway != '':
-					f.write("GATEWAY='" + self.gateway + "'\n")
-				if self.dns != '':
-					f.write("DNS='" + self.dns + "'\n")
-		finally:
-			f.close()
-
-		# Write trigger file for XAPI to continue the network reset on startup
+		# update system network config file
 		try:
 			f = file(network_reset, 'w')
 			f.write('DEVICE=' + self.device + '\n')
@@ -365,22 +243,13 @@ class NetworkResetDialogue(Dialogue):
 		finally:
 			f.close()
 
-		# Reset the domain 0 network interface naming configuration
-		# back to a fresh-install state for the currently-installed
-		# hardware.
-		os.system("/etc/sysconfig/network-scripts/interface-rename.py --reset-to-install")
-
 class XSFeatureNetworkReset:
 	@classmethod
 	def StatusUpdateHandler(cls, inPane):
-		data = Data.Inst()
-		warning = """This command will reboot the host and reset its network configuration.
+		data = Ubuntu1204Data.Inst()
+		warning = """This command will reset its network configuration.
 
-As part of this utility all running VMs will be forcefully shutdown.
-
-Before running this command:
-- Shutdown running VMs.
-- Disable HA if enabled on the pool."""
+Any active network connection might be impacted."""
 		inPane.AddTitleField(Lang("Emergency Network Reset"))
 		inPane.AddWrappedTextField(warning)
 				

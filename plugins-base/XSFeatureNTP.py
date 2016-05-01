@@ -1,18 +1,3 @@
-# Copyright (c) 2008-2009 Citrix Systems Inc.
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 only.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
 if __name__ == "__main__":
     raise Exception("This script is a plugin for xsconsole and cannot run independently")
     
@@ -22,7 +7,7 @@ class NTPDialogue(Dialogue):
     def __init__(self):
         Dialogue.__init__(self)
 
-        data=Data.Inst()
+        data=Ubuntu1204Data.Inst()
             
         choiceDefs = [
             ChoiceDef(Lang("Enable NTP Time Synchronization"), lambda: self.HandleInitialChoice('ENABLE') ), 
@@ -44,7 +29,7 @@ class NTPDialogue(Dialogue):
     def BuildPane(self):
         if self.state == 'REMOVE':
             choiceDefs = []
-            for server in Data.Inst().ntp.servers([]):
+            for server in Ubuntu1204Data.Inst().ntp.servers([]):
                 choiceDefs.append(ChoiceDef(server, lambda: self.HandleRemoveChoice(self.removeMenu.ChoiceIndex())))
         
             self.removeMenu = Menu(self, None, Lang("Remove NTP Server"), choiceDefs)
@@ -106,7 +91,7 @@ class NTPDialogue(Dialogue):
             Layout.Inst().PopDialogue()
             try:
                 IPUtils.AssertValidNetworkName(inputValues['name'])
-                data=Data.Inst()
+                data=Ubuntu1204Data.Inst()
                 servers = data.ntp.servers([])
                 servers.append(inputValues['name'])
                 data.NTPServersSet(servers)
@@ -134,7 +119,7 @@ class NTPDialogue(Dialogue):
         return handled
             
     def HandleInitialChoice(self,  inChoice):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         try:
             if inChoice == 'ENABLE':
                 Layout.Inst().TransientBanner(Lang("Enabling..."))
@@ -165,7 +150,7 @@ class NTPDialogue(Dialogue):
 
     def HandleRemoveChoice(self,  inChoice):
         Layout.Inst().PopDialogue()
-        data=Data.Inst()
+        data=Ubuntu1204Data.Inst()
         servers = data.ntp.servers([])
         thisServer = servers[inChoice]
         del servers[inChoice]
@@ -174,7 +159,7 @@ class NTPDialogue(Dialogue):
         data.Update()
 
     def Commit(self, inMessage):
-        data=Data.Inst()
+        data=Ubuntu1204Data.Inst()
         try:
             data.SaveToNTPConf()
             if data.chkconfig.ntpd(False):
@@ -189,7 +174,7 @@ class NTPDialogue(Dialogue):
 class XSFeatureNTP:
     @classmethod
     def StatusUpdateHandler(cls, inPane):
-        data = Data.Inst()
+        data = Ubuntu1204Data.Inst()
         inPane.AddTitleField(Lang("Network Time (NTP)"))
         
         inPane.AddWrappedTextField(Lang("One or more network time servers can be configured to synchronize time between servers.  This is especially important for pooled servers."))
