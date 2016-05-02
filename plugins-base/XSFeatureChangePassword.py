@@ -92,7 +92,7 @@ class ChangePasswordDialogue(Dialogue):
                     Layout.Inst().PushDialogue(InfoDialogue( successMessage))
                     State.Inst().PasswordChangeRequiredSet(False)
                     
-                Data.Inst().Update()
+                Ubuntu1204Data.Inst().Update()
 
         elif inKey == 'KEY_TAB':
             pane.ActivateNextInput()

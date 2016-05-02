@@ -230,17 +230,19 @@ class Auth:
             except Exception, e:
                 raise Exception(Lang('Old password not accepted.  Please check your access credentials and try again.'))
             self.AssertAuthenticated()
-            
-        try:
-            # Use xapi if possible, to take care of password changes for pools
-            session = self.OpenSession()
-            try:
-                session.xenapi.session.change_password(inOldPassword, inNewPassword)
-            finally:
-                self.CloseSession(session)
-        except Exception, e:
-            ShellPipe("/usr/bin/passwd", "--stdin", "root").Call(inNewPassword)
-            raise Exception(Lang("The underlying Xen API xapi could not be used.  Password changed successfully on this host only."))
+
+        ShellPipe("/usr/bin/passwd", "root").Call(inNewPassword)
+
+        #try:
+        #    # Use xapi if possible, to take care of password changes for pools
+        #    session = self.OpenSession()
+        #    try:
+        #        session.xenapi.session.change_password(inOldPassword, inNewPassword)
+        #    finally:
+        #        self.CloseSession(session)
+        #except Exception, e:
+        #    ShellPipe("/usr/bin/passwd", "--stdin", "root").Call(inNewPassword)
+        #    raise Exception(Lang("The underlying Xen API xapi could not be used.  Password changed successfully on this host only."))
             
         # Caller handles exceptions
         

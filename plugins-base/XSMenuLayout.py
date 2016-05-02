@@ -100,64 +100,18 @@ class XSMenuLayout:
             inPane.NewLine()
             inPane.AddWrappedTextField(data.keyboard.currentname(Lang('<Default>')))
 
-    def UpdateFieldsVM(self, inPane):
-        hotData = HotData.Inst()
-
-        inPane.AddTitleField(Lang("Virtual Machines"))
-        
-        inPane.AddWrappedTextField(Lang('Press <Enter> to view the Virtual Machines menu.  This menu '
-            'can start, stop and migrate existing Virtual Machines on this host, and display '
-            'performance information.'))
-        inPane.NewLine()
-
-    def UpdateFieldsDISK(self, inPane):
-        data = Data.Inst()
-        inPane.AddTitleField(Lang("Disks and Storage Repositories"))
-    
-        inPane.AddWrappedTextField(Lang("Press <Enter> to create and attach Storage Repositories, select local  "
-            "disks to use as Storage Repositories, "
-            "and specify destinations for Suspend and Crash Dump images for this host."))
-        inPane.NewLine()
-    
-        inPane.AddWrappedBoldTextField(Lang('Suspend Image SR'))
-        if data.host.suspend_image_sr(False):
-            inPane.AddWrappedTextField(data.host.suspend_image_sr.name_label())
-        else:
-            inPane.AddWrappedTextField(Lang('<Not Configured>'))
-            
-        inPane.NewLine()
-            
-        inPane.AddWrappedBoldTextField(Lang('Crash Dump SR'))
-        if data.host.crash_dump_sr(False):
-            inPane.AddWrappedTextField(data.host.crash_dump_sr.name_label())
-        else:
-            inPane.AddWrappedTextField(Lang('<Not Configured>'))
-            
-        inPane.AddKeyHelpField( {
-            Lang("<F5>") : Lang("Refresh")
-        })
-    
-    def UpdateFieldsPOOL(self, inPane):
-        data = Data.Inst()
-        inPane.AddTitleField(Lang("Resource Pool Configuration"))
-    
-        inPane.AddWrappedTextField(Lang('A Resource Pool allows a number of hosts to share resources '
-            'and migrate running Virtual Machines between hosts.  Press <Enter> to add this host a Resource Pool '
-            'or remove it from its current Pool.'))
-        inPane.NewLine()
-
     def UpdateFieldsREBOOTSHUTDOWN(self, inPane):
         inPane.AddTitleField(Lang("Reboot or Shutdown"))
     
         inPane.AddWrappedTextField(Lang(
             "This option can reboot or shutdown this server, and enter or exit Maintenance Mode."))
         
-    def UpdateFieldsTECHNICAL(self, inPane):
-        inPane.AddTitleField(Lang("Technical Support"))
-    
-        inPane.AddWrappedTextField(Lang(
-            "From this menu you can "
-            "validate the configuration of this server and upload or save bug reports."))
+    #def UpdateFieldsTECHNICAL(self, inPane):
+    #    inPane.AddTitleField(Lang("Technical Support"))
+    #
+    #    inPane.AddWrappedTextField(Lang(
+    #        "From this menu you can "
+    #        "validate the configuration of this server and upload or save bug reports."))
 
     def UpdateFieldsREMOTE(self, inPane):
         data = Data.Inst()
@@ -165,13 +119,6 @@ class XSMenuLayout:
     
         inPane.AddWrappedTextField(Lang("This menu configures remote services, such as access by "
             "remote shell (ssh) and remote logging (syslog) to other servers."))
-
-    def UpdateFieldsBUR(self, inPane):
-        inPane.AddTitleField(Lang("Backup, Restore and Update"))
-   
-        inPane.AddWrappedTextField(Lang(
-            "From this menu you can backup and restore the system database and Virtual Machine metadata, and apply "
-            "software updates to the system."))
 
     def ActivateHandler(self, inName):
         Layout.Inst().TopDialogue().ChangeMenu(inName)
@@ -184,22 +131,16 @@ class XSMenuLayout:
                 lambda: self.ActivateHandler('MENU_NETWORK'), self.UpdateFieldsNETWORK ],
             [ 'MENU_AUTH', Lang("Authentication"),
                 lambda: self.ActivateHandler('MENU_AUTH'), self.UpdateFieldsAUTH ],
-            [ 'MENU_VM', Lang("Virtual Machines"),
-                lambda: self.ActivateHandler('MENU_VM'), self.UpdateFieldsVM ],
-            [ 'MENU_DISK', Lang("Disks and Storage Repositories"),
-                lambda: self.ActivateHandler('MENU_DISK'), self.UpdateFieldsDISK ],
-            [ 'MENU_POOL', Lang("Resource Pool Configuration"),
-                lambda: self.ActivateHandler('MENU_POOL'), self.UpdateFieldsPOOL],
             [ 'MENU_PROPERTIES', Lang("Hardware and BIOS Information"),
                 lambda: self.ActivateHandler('MENU_PROPERTIES'), self.UpdateFieldsPROPERTIES ],
             [ 'MENU_MANAGEMENT', Lang("Keyboard and Timezone"),
                 lambda: self.ActivateHandler('MENU_MANAGEMENT'), self.UpdateFieldsMANAGEMENT ],
             [ 'MENU_REMOTE', Lang("Remote Service Configuration"),
                 lambda: self.ActivateHandler('MENU_REMOTE'), self.UpdateFieldsREMOTE ],
-            [ 'MENU_BUR', Lang("Backup, Restore and Update"),
-                lambda: self.ActivateHandler('MENU_BUR'), self.UpdateFieldsBUR ],
-            [ 'MENU_TECHNICAL', Lang("Technical Support"),
-                lambda: self.ActivateHandler('MENU_TECHNICAL'), self.UpdateFieldsTECHNICAL ],
+            #[ 'MENU_BUR', Lang("Backup, Restore and Update"),
+            #    lambda: self.ActivateHandler('MENU_BUR'), self.UpdateFieldsBUR ],
+            #[ 'MENU_TECHNICAL', Lang("Technical Support"),
+            #    lambda: self.ActivateHandler('MENU_TECHNICAL'), self.UpdateFieldsTECHNICAL ],
             [ 'MENU_REBOOTSHUTDOWN', Lang("Reboot or Shutdown"),
                 lambda: self.ActivateHandler('MENU_REBOOTSHUTDOWN'), self.UpdateFieldsREBOOTSHUTDOWN ]
         ]

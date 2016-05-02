@@ -761,9 +761,12 @@ class Data:
 
         # Store the keymap for next boot
         # Currently this has no effect
-        file = open('/etc/sysconfig/keyboard', 'w')
-        file.write('KEYTABLE="'+keymapParam+'"\n')
-        file.close()
+        try:
+            file = open('/etc/sysconfig/keyboard', 'w')
+            file.write('KEYTABLE="'+keymapParam+'"\n')
+            file.close()
+        except Exception, e:
+            pass
     
     def KeymapToName(self, inKeymap):
         # Derive a name to present to the user

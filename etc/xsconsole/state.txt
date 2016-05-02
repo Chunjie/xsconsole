@@ -22,12 +22,14 @@ p7
 I00
 sS'authTimeoutSeconds'
 p8
-I300
+I240
 sS'keymap'
 p9
-NsS'rebootMessage'
+S'br-abnt2'
 p10
-NsS'modified'
+sS'rebootMessage'
 p11
+NsS'modified'
+p12
 I00
 sb.
