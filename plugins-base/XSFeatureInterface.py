@@ -15,7 +15,7 @@ class InterfaceDialogue(Dialogue):
         currentPIF = None
         choiceArray = []
 
-	# nic menu
+	    # nic menu
         for i in range(len(data.host.PIFs([]))):
             pif = data.host.PIFs([])[i]
             if currentPIF is None and pif['management']:
@@ -37,7 +37,7 @@ class InterfaceDialogue(Dialogue):
 
         self.nicMenu = Menu(self, None, "Configure Management Interface", choiceDefs)
         
-	# mode menu
+	    # mode menu
         self.modeMenu = Menu(self, None, Lang("Select IP Address Configuration Mode"), [
             ChoiceDef(Lang("DHCP"), lambda: self.HandleModeChoice('DHCP2') ), 
             ChoiceDef(Lang("DHCP with Manually Assigned Hostname"), lambda: self.HandleModeChoice('DHCPMANUAL') ), 
@@ -49,14 +49,14 @@ class InterfaceDialogue(Dialogue):
             ChoiceDef(Lang("Convert to Static Addressing"), lambda: self.HandlePostDHCPChoice('CONVERT') ), 
             ])
         
-        self.postHostnameMenu = Menu(self, None, Lang("Assign Name"), [
-            ChoiceDef(Lang("Copy Hostname to ")+data.derived.app_name()+Lang(' Name'),
-                lambda: self.HandlePostHostnameChoice('COPY') ), 
-            ChoiceDef(Lang("Keep the Current ")+data.derived.app_name()+Lang(' Name'),
-                lambda: self.HandlePostHostnameChoice('KEEP') ), 
-            ChoiceDef(Lang("Enter a New ")+data.derived.app_name()+Lang(' Name'),
-                lambda: self.HandlePostHostnameChoice('NEW') ),
-            ])
+        #self.postHostnameMenu = Menu(self, None, Lang("Assign Name"), [
+        #    ChoiceDef(Lang("Copy Hostname to ")+data.derived.app_name()+Lang(' Name'),
+        #        lambda: self.HandlePostHostnameChoice('COPY') ), 
+        #    ChoiceDef(Lang("Keep the Current ")+data.derived.app_name()+Lang(' Name'),
+        #        lambda: self.HandlePostHostnameChoice('KEEP') ), 
+        #    ChoiceDef(Lang("Enter a New ")+data.derived.app_name()+Lang(' Name'),
+        #        lambda: self.HandlePostHostnameChoice('NEW') ),
+        #    ])
         
         self.ChangeState('INITIAL')
 
@@ -129,7 +129,7 @@ class InterfaceDialogue(Dialogue):
         pane = self.Pane()
         pane.ResetFields()
         pane.AddTitleField(Lang("Enter the hostname for this server"))
-        pane.AddInputField(Lang("Hostname",  14),  Data.Inst().host.hostname(''), 'hostname')
+        pane.AddInputField(Lang("Hostname",  14),  Ubuntu1204Data.Inst().host.hostname(''), 'hostname')
         pane.AddKeyHelpField( { Lang("<Enter>") : Lang("OK"), Lang("<Esc>") : Lang("Cancel") } )        
         if pane.InputIndex() is None:
             pane.InputIndexSet(0) # Activate first field for input
@@ -139,11 +139,11 @@ class InterfaceDialogue(Dialogue):
         pane.ResetFields()
         
         pane.AddTitleField(Lang("Press <Enter> to apply the following configuration"))
-        
+
         if self.nic is None:
             pane.AddWrappedTextField(Lang("The Management Interface will be disabled"))
         else:
-            pif = Data.Inst().host.PIFs()[self.nic]
+            pif = Ubuntu1204Data.Inst().host.PIFs()[self.nic]
             pane.AddStatusField(Lang("Device",  16),  pif['device'])
             pane.AddStatusField(Lang("Name",  16),  pif['metrics']['device_name'])
             pane.AddStatusField(Lang("IP Mode",  16),  self.mode)
@@ -165,11 +165,11 @@ class InterfaceDialogue(Dialogue):
    
         pane.AddWrappedBoldTextField(Lang("The following addresses have been assigned by DHCP.  Would you like to accept them and continue with DHCP enabled, or convert to a static configuration?"))
         pane.NewLine()
-        
+
         if self.nic is None:
             pane.AddWrappedTextField(Lang("<No interface configured>"))
         else:
-            pif = Data.Inst().host.PIFs()[self.nic]
+            pif = Ubuntu1204Data.Inst().host.PIFs()[self.nic]
             pane.AddStatusField(Lang("Device",  16),  pif['device'])
             pane.AddStatusField(Lang("Name",  16),  pif['metrics']['device_name'])
             pane.AddStatusField(Lang("IP Address",  16),  self.IP)
@@ -180,33 +180,6 @@ class InterfaceDialogue(Dialogue):
         pane.AddMenuField(self.postDHCPMenu)
         pane.AddKeyHelpField( { Lang("<Enter>") : Lang("OK"), Lang("<Esc>") : Lang("Cancel") } )
     
-    def UpdateFieldsPOSTHOSTNAME(self):
-        data = Ubuntu1204Data.Inst()
-        pane = self.Pane()
-        pane.ResetFields()
-   
-        pane.AddWrappedBoldTextField(data.derived.full_app_name()+Lang(" uses free-form names to "
-            "refer to hosts.  Would you like to copy the new hostname to the "+data.derived.app_name()+
-            " name?"))
-        pane.NewLine()
-        if data.host.name_label('') != '':
-            pane.AddWrappedBoldTextField(Lang("The current ")+data.derived.app_name()+Lang(" name is '")+
-            data.host.name_label(Lang('<Not Set>'))+"'")
-
-        pane.NewLine()
-        pane.AddMenuField(self.postHostnameMenu)
-        pane.AddKeyHelpField( { Lang("<Enter>") : Lang("OK"), Lang("<Esc>") : Lang("Cancel") } )
-    
-    def UpdateFieldsNAMELABEL(self):
-        data = Ubuntu1204Data.Inst()
-        pane = self.Pane()
-        pane.ResetFields()
-        pane.AddTitleField(Lang("Enter the ")+data.derived.app_name()+Lang(" name for this server"))
-        pane.AddInputField(Lang("Name",  8),  data.host.hostname(''), 'namelabel')
-        pane.AddKeyHelpField( { Lang("<Enter>") : Lang("OK"), Lang("<Esc>") : Lang("Cancel") } )     
-        if pane.InputIndex() is None:
-            pane.InputIndexSet(0) # Activate first field for input
-            
     def UpdateFields(self):
         self.Pane().ResetPosition()
         getattr(self, 'UpdateFields'+self.state)() # Despatch method named 'UpdateFields'+self.state
@@ -286,13 +259,10 @@ class InterfaceDialogue(Dialogue):
                 self.Commit()
                 if self.mode == 'DHCP':
                     data = Ubuntu1204Data.Inst()
-                    self.IP = data.ManagementIP()
-                    self.netmask = data.ManagementNetmask()
-                    self.gateway = data.ManagementGateway()
+                    self.IP = data.derived.managementpifs()[0]['ipaddr']
+                    self.netmask = data.derived.managementpifs()[0]['netmask']
+                    self.gateway = data.derived.managementpifs()[0]['gateway']
                     self.ChangeState('POSTDHCP')
-                elif self.nic != None:
-                    # Not disabling, so show post-hostname dialogue
-                    self.ChangeState('POSTHOSTNAME')
                 else:
                     self.Complete() # Disabled management interface
                 
@@ -305,27 +275,6 @@ class InterfaceDialogue(Dialogue):
     
     def HandleKeyPOSTDHCP(self, inKey):
         return self.postDHCPMenu.HandleKey(inKey)
-    
-    def HandleKeyPOSTHOSTNAME(self, inKey):
-        return self.postHostnameMenu.HandleKey(inKey)
-    
-    def HandleKeyNAMELABEL(self, inKey):
-        handled = True
-        pane = self.Pane()
-        if inKey == 'KEY_ENTER':
-            inputValues = pane.GetFieldValues()
-            nameLabel = inputValues['namelabel']
-            try:
-                Data.Inst().NameLabelSet(nameLabel)
-                self.Complete()
-            except Exception, e:
-                self.Complete(Lang("Name Change Failed: ")+str(e))
-
-        elif pane.CurrentInput().HandleKey(inKey):
-            pass # Leave handled as True
-        else:
-            handled = False
-        return handled
     
     def HandleKey(self,  inKey):
         handled = False
@@ -354,27 +303,17 @@ class InterfaceDialogue(Dialogue):
             self.mode = 'DHCP'
             self.ChangeState('HOSTNAME')
         elif inChoice == 'STATIC':
-            self.hostname = Data.Inst().host.hostname('')
+            self.hostname = Ubuntu1204Data.Inst().host.hostname('')
             self.mode = 'Static'
             self.ChangeState('STATICIP')
 
     def HandlePostDHCPChoice(self,  inChoice):
         if inChoice == 'CONTINUE':
-            self.ChangeState('POSTHOSTNAME')
+	    self.Complete()
         elif inChoice == 'CONVERT':
             self.converting = True
             self.mode = 'Static'
             self.ChangeState('STATICIP')
-
-    def HandlePostHostnameChoice(self,  inChoice):
-        data = Ubuntu1204Data.Inst()
-        if inChoice == 'COPY':
-            data.NameLabelSet(data.host.hostname(''))
-            self.Complete() # We're done
-        elif inChoice == 'KEEP':
-            self.Complete() # We're done
-        elif inChoice == 'NEW':
-            self.ChangeState('NAMELABEL')
 
     def HandleRenewChoice(self):
         data = Ubuntu1204Data.Inst()
@@ -384,7 +323,7 @@ class InterfaceDialogue(Dialogue):
         Layout.Inst().TransientBanner(Lang('Renewing DHCP Lease...'))
 
         (status, output) = data.RenewDHCPLease(pif['device'])
-	if status:
+        if status:
             data.Update()
             ipAddress = data.host.address('')
             if ipAddress == '':
@@ -397,7 +336,8 @@ class InterfaceDialogue(Dialogue):
         data = Ubuntu1204Data.Inst()
         if self.nic is None:
             self.mode = None
-            data.DisableManagement()
+            for pif in data.derived.managementpifs([]):
+                data.DisableInterface(pif['device'])
         else:
             pif = data.host.PIFs()[self.nic]
             if self.mode.lower().startswith('static'):
@@ -415,7 +355,18 @@ class InterfaceDialogue(Dialogue):
                 data.HostnameSet('localhost')
             else:                
                 data.HostnameSet(self.hostname)
-            data.ReconfigureManagement(pif, self.mode, self.IP,  self.netmask, self.gateway, dns)
+
+	    conf = {
+                "device": pif['device'],
+                "configmode": self.mode
+            }
+            if self.mode.lower().startswith('static'):
+                conf["ipaddr"]  = self.IP
+                conf["netmask"] = self.netmask
+                conf["gateway"] = self.gateway
+                conf["dns"]     = dns
+            data.UpdateNetConf(conf)
+
         data.Update()
         self.hostname = data.host.hostname('') # Hostname may have changed.  Must be after data.Update()
 

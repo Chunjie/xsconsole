@@ -200,7 +200,7 @@ class NetworkResetDialogue(Dialogue):
 		# update system network config file
 		conf = {
 			"device": self.device,
-			"configmode": self.mode
+			"configmode": self.mode.lower()
 		}
 		if self.mode.lower() == 'static':
 			conf["ipaddr"]  = self.IP

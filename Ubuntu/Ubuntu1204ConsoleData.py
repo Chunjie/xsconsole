@@ -105,6 +105,8 @@ class Ubuntu1204Data:
                 self.data['sslfingerprint'] = fp[1]
             else:
                 self.data['sslfingerprint'] = "<Unknown>"
+        else:
+            self.data['sslfingerprint'] = "<Unknown>"
  
         try:
             self.data['sshfingerprint'] = ShellPipe('/usr/bin/ssh-keygen', '-lf', '/etc/ssh/ssh_host_rsa_key.pub').AllOutput()[0].split(' ')[1]
@@ -195,14 +197,8 @@ class Ubuntu1204Data:
         if not re.match(r'[-A-Za-z0-9.]+$', inHostname):
             raise Exception("Invalid hostname '"+inHostname+"'")
         IPUtils.AssertValidNetworkName(inHostname)
-        
-        self.RequireSession()
 
-        self.session.xenapi.host.set_hostname_live(self.host.opaqueref(), inHostname)
-
-    def NameLabelSet(self, inNameLabel):
-        self.RequireSession()
-        self.session.xenapi.host.set_name_label(self.host.opaqueref(), inNameLabel)
+        Ubuntu.SetHostName(inHostname)
 
     def NameserversSet(self, inServers):
         self.data['dns']['nameservers'] = inServers
@@ -212,8 +208,6 @@ class Ubuntu1204Data:
 
     def LoggingDestinationSet(self, inDestination):
         Auth.Inst().AssertAuthenticated()
-        
-        self.RequireSession()
         
         self.session.xenapi.host.remove_from_logging(self.host.opaqueref(), 'syslog_destination')
         self.session.xenapi.host.add_to_logging(self.host.opaqueref(), 'syslog_destination', inDestination)
@@ -645,6 +639,10 @@ class Ubuntu1204Data:
 
     def RenewDHCPLease(self, ifname):
         status, output = commands.getstatusoutput("dhclient -r %s; dhclient %s" % (ifname, ifname))
+        return (status == 0, output)
+
+    def DisableInterface(self, ifname):
+        status, output = commands.getstatusoutput("ifconfig %s down" % ifname)
         return (status == 0, output)
             
     def SetVerboseBoot(self, inVerbose):

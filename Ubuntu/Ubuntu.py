@@ -13,7 +13,7 @@ class Util:
 
     @classmethod
     def GetIfAddr(cls, ifname):
-        ifaddr = ""
+        ifaddr = "UNKNOWN"
         cmd = "ifconfig %s | awk -F\"[: ]+\" '/inet addr/{print $4}'" % ifname
         (status, output) = commands.getstatusoutput(cmd)
         if status == 0:
@@ -22,7 +22,7 @@ class Util:
 
     @classmethod
     def GetIfNetmask(cls, ifname):
-        netmask = ""
+        netmask = "UNKNOWN"
         cmd = "ifconfig %s | awk -F\"[: ]+\" '/Mask/{print $8}'" % ifname
         (status, output) = commands.getstatusoutput(cmd)
         if status == 0:
@@ -31,7 +31,7 @@ class Util:
 
     @classmethod
     def GetIfGateway(cls, ifname):
-        gateway = ""
+        gateway = "UNKNOWN"
         routeRE = re.compile(r'([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+UG\s+\d+\s+\d+\s+\d+\s+' + ifname,
                 re.IGNORECASE)
         routes = commands.getoutput("route -n").split("\n")
@@ -44,7 +44,7 @@ class Util:
 
     @classmethod
     def GetIfMacaddr(cls, ifname):
-        macaddr = ""
+        macaddr = "UNKNOWN"
         cmd = "ifconfig %s | awk -F\"[ ]+\" '/HWaddr/{print $5}'" % ifname
         (status, output) = commands.getstatusoutput(cmd)
         if status == 0:
@@ -68,7 +68,7 @@ class Util:
     @classmethod
     def GetHostName(cls):
         hostname = "UNKNOWN"
-        (status, output) = commands.getstatusoutput("hostname -f") # FQDN
+        (status, output) = commands.getstatusoutput("hostname")
         if status == 0:
             hostname = output.strip()
         return hostname
@@ -220,3 +220,18 @@ class Ubuntu:
         if orig_name == "ntpd":
             real_name = "ntp"
         return real_name
+
+    @classmethod
+    def SetHostName(cls, hostname):
+        (status, output) = commands.getstatusoutput("hostname %s" % hostname)
+        if status != 0:
+            raise Exception("hostname command failed '" + output + "'")
+
+        try:
+            f = open("/tmp/hostname.new", 'w')
+            f.write(hostname)
+            f.close()
+
+            os.rename("/tmp/hostname.new", "/etc/hostname")
+        except Exception, e:
+            raise
