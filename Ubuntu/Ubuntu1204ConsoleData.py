@@ -144,6 +144,8 @@ class Ubuntu1204Data:
         self.ScanService('ntpd')
 
         self.DeriveData()
+
+        self.data['host']['address'] = self.data['derived']['managementpifs'][0]['ipaddr']
         
     def DeriveData(self):
         self.data.update({
@@ -635,6 +637,15 @@ class Ubuntu1204Data:
     def NTPStatus(self):
         status, output = commands.getstatusoutput("/usr/bin/ntpstat")
         return output
+
+    def UpdateNetConf(self, conf):
+        Ubuntu.UpdateNetConf(conf)
+        status, output = commands.getstatusoutput("/etc/init.d/networking restart")
+        return (status == 0, output)
+
+    def RenewDHCPLease(self, ifname):
+        status, output = commands.getstatusoutput("dhclient -r %s; dhclient %s" % (ifname, ifname))
+        return (status == 0, output)
             
     def SetVerboseBoot(self, inVerbose):
         if inVerbose:

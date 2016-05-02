@@ -77,6 +77,7 @@ class Util:
     def GetNICMetric(cls, ifname):
         vendor = "UNKNOWN"
         pciname = "UNKNOWN"
+        carrier = False
         try:
             pci_dev_path = os.readlink("/sys/class/net/%s/device" % ifname)
             pci_bus_id = ":".join(pci_dev_path.split(":")[-2:])
@@ -87,9 +88,15 @@ class Util:
                 if match:
                     vendor = match.group(2)
                     pciname = match.group(3)
+                    
+            (status, output) = commands.getstatusoutput("cat /sys/class/net/%s/carrier" % ifname)
+            if status == 0:
+                if output.strip() == "1":
+                    carrier = True
+
         except Exception, e:
             pass
-        return (vendor, pciname)
+        return (vendor, pciname, carrier)
 
 class Ubuntu:
     @classmethod
@@ -133,7 +140,7 @@ class Ubuntu:
                     gateway = Util.GetIfGateway(inf)
                     macaddr = Util.GetIfMacaddr(inf)
                     configmode = Util.GetIfConfigmode(inf)
-                    vendor, pciname = Util.GetNICMetric(inf)
+                    vendor, pciname, carrier = Util.GetNICMetric(inf)
 
                     pifs.append({
                         "device": inf,
@@ -145,7 +152,8 @@ class Ubuntu:
                         "configmode": configmode,
                         "metrics": {
                             "vendor_name": vendor,
-                            "device_name": pciname
+                            "device_name": pciname,
+			    "carrier": carrier
                         }
                     })
         return pifs
@@ -153,17 +161,54 @@ class Ubuntu:
     @classmethod
     def UpdateNetConf(cls, conf):
         ifname = conf['device']
-        configmodemode = conf['configmode']
+        configmode = conf['configmode']
         try:
             f = open("/etc/network/interfaces", 'r')
             lines = f.readlines()
             f.close()
 
-            ifconfRE = re.compile("")
+            # remove old config
+            startIfConf = -1
+            endIfConf = -1
+            numOfLine = -1
+            ifconfRE = re.compile("^auto.*%s" % ifname)
+            ifautoRE = re.compile("^auto")
             for line in lines:
-                if line.
+                numOfLine = numOfLine + 1
+
+                if not line.startswith('#'):
+                    if ifconfRE.match(line) != None:
+                        startIfConf = numOfLine
+                        continue
+
+                if startIfConf != -1:
+                    if ifautoRE.match(line) != None:
+                        endIfConf = numOfLine
+                        break
+
+            if endIfConf == -1:
+                endIfConf = numOfLine + 1
+
+            for num in range(startIfConf, endIfConf):
+                del lines[startIfConf]
+
+            # append new config
+            lines.append("auto %s\n" % ifname)
+            if configmode.lower() == "static":
+                lines.append("iface %s inet static\n" % ifname)
+                lines.append("address %s\n" % conf['ipaddr'])
+                lines.append("netmask %s\n" % conf['netmask'])
+                lines.append('gateway %s\n' % conf['gateway'])
+            else:
+                lines.append("iface %s inet dhcp\n" % ifname)
+
+            f = open("/etc/network/interfaces", 'w')
+            for line in lines:
+                f.write(line)
+            f.close()
+
         except Exception, e:
-            pass
+            raise
 
     @classmethod
     def GetHostName(cls):

@@ -21,12 +21,13 @@ from XSConsoleStandard import *
 class TestNetworkDialogue(Dialogue):
     def __init__(self):
         Dialogue.__init__(self)
+	data = Ubuntu1204Data.Inst()
 
         pane = self.NewPane(DialoguePane(self.parent))
         pane.TitleSet(Lang("Test Network Configuration"))
         pane.AddBox()
         
-        gatewayName = Data.Inst().ManagementGateway()
+        gatewayName = data.derived.managementpifs()[0]["gateway"]
         if gatewayName is None:
             gatewayName = Lang('Unknown')
         
@@ -105,7 +106,7 @@ class TestNetworkDialogue(Dialogue):
         if inChoice == 'local':
             pingTarget = '127.0.0.1'
         elif inChoice == 'gateway':
-            pingTarget = Data.Inst().ManagementGateway()
+            pingTarget = Ubuntu1204Data.Inst().derived.managementpifs()[0]["gateway"]
         elif inChoice == 'fixedserver':
             pingTarget = 'www.kernel.org'
         else:

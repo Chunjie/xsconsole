@@ -14,6 +14,8 @@ class InterfaceDialogue(Dialogue):
         self.converting = False
         currentPIF = None
         choiceArray = []
+
+	# nic menu
         for i in range(len(data.host.PIFs([]))):
             pif = data.host.PIFs([])[i]
             if currentPIF is None and pif['management']:
@@ -35,6 +37,7 @@ class InterfaceDialogue(Dialogue):
 
         self.nicMenu = Menu(self, None, "Configure Management Interface", choiceDefs)
         
+	# mode menu
         self.modeMenu = Menu(self, None, Lang("Select IP Address Configuration Mode"), [
             ChoiceDef(Lang("DHCP"), lambda: self.HandleModeChoice('DHCP2') ), 
             ChoiceDef(Lang("DHCP with Manually Assigned Hostname"), lambda: self.HandleModeChoice('DHCPMANUAL') ), 
@@ -65,9 +68,9 @@ class InterfaceDialogue(Dialogue):
         self.hostname = data.host.hostname('')
         
         if currentPIF is not None:
-            if 'ip_configuration_mode' in currentPIF: self.mode = currentPIF['ip_configuration_mode']
+            if 'configmode' in currentPIF: self.mode = currentPIF['configmode']
             if self.mode.lower().startswith('static'):
-                if 'IP' in currentPIF: self.IP = currentPIF['IP']
+                if 'ipaddr' in currentPIF: self.IP = currentPIF['ipaddr']
                 if 'netmask' in currentPIF: self.netmask = currentPIF['netmask']
                 if 'gateway' in currentPIF: self.gateway = currentPIF['gateway']
     
@@ -379,22 +382,16 @@ class InterfaceDialogue(Dialogue):
         
         Layout.Inst().PopDialogue()
         Layout.Inst().TransientBanner(Lang('Renewing DHCP Lease...'))
-        
-        try:
-            data.ReconfigureManagement(pif, 'DHCP', '', '', '')
+
+        (status, output) = data.RenewDHCPLease(pif['device'])
+	if status:
             data.Update()
             ipAddress = data.host.address('')
             if ipAddress == '':
-                # Try again using disable/reenable
-                data.DisableManagement()
-                data.ReconfigureManagement(pif, 'DHCP', '', '', '')
-                data.Update()
-                ipAddress = data.host.address('')
-            if ipAddress == '':
                 ipAddress = Lang('<Unknown>')
             Layout.Inst().PushDialogue(InfoDialogue(Lang("DHCP Renewed with IP address ")+ipAddress))
-        except Exception, e:
-            Layout.Inst().PushDialogue(InfoDialogue(Lang("Renewal Failed"), Lang(e)))
+    	else:
+            Layout.Inst().PushDialogue(InfoDialogue(Lang("Renewal Failed"), output))
             
     def Commit(self):
         data = Ubuntu1204Data.Inst()

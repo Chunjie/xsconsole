@@ -1,33 +1,7 @@
-# (c) 2007-2009 Citrix Systems Inc.
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 only.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
 if __name__ == "__main__":
 	raise Exception("This script is a plugin for xsconsole and cannot run independently")
 	
 from XSConsoleStandard import *
-
-interface_reconfigure = '%s/interface-reconfigure' % (Config.Inst().LibexecPath())
-network_reset = '/tmp/network-reset'
-
-def read_dict_file(fname):
-	f = open(fname, 'r')
-	d = {}
-	for l in f.readlines():
-		kv = l.split('=')
-		d[kv[0]] = kv[1][1:-2]
-	return d
 
 class NetworkResetDialogue(Dialogue):
 	def __init__(self):
@@ -104,7 +78,6 @@ class NetworkResetDialogue(Dialogue):
 		pane.ResetFields()
 
 		pane.AddWrappedTextField(Lang("Press <Enter> to reset the network configuration."))
-		pane.AddWrappedTextField(Lang("This will cause the host to reboot."))
 		pane.NewLine()
 
 		pane.AddWrappedTextField(Lang("The Primary Management Interface will be reconfigured with the following settings:"))
@@ -116,7 +89,7 @@ class NetworkResetDialogue(Dialogue):
 			pane.AddStatusField(Lang("Gateway",  16),  self.gateway)
 			pane.AddStatusField(Lang("DNS Server",  16),  self.dns)
 								
-		pane.AddKeyHelpField( { Lang("<Enter>") : Lang("Apply Changes and Reboot"), Lang("<Esc>") : Lang("Cancel") } )
+		pane.AddKeyHelpField( { Lang("<Enter>") : Lang("Apply Changes and Reset"), Lang("<Esc>") : Lang("Cancel") } )
 					
 	def UpdateFields(self):
 		self.Pane().ResetPosition()
@@ -198,12 +171,6 @@ class NetworkResetDialogue(Dialogue):
 		pane = self.Pane()
 		if inKey == 'KEY_ENTER':
 			self.Commit()
-			
-			# Reboot
-			Layout.Inst().ExitBannerSet(Lang("Rebooting..."))
-			Layout.Inst().ExitCommandSet('mount -o remount, ro /')
-			Layout.Inst().ExitCommandSet('/sbin/reboot -f')
-			XSLog('Initiating reboot')
 		else:
 			handled = False
 		return handled
@@ -228,21 +195,27 @@ class NetworkResetDialogue(Dialogue):
 			self.ChangeState('STATICIP')
 			
 	def Commit(self):
-		# update system network config file
-		try:
-			f = file(network_reset, 'w')
-			f.write('DEVICE=' + self.device + '\n')
-			f.write('MODE=' + self.mode + '\n')
-			if self.mode == 'static':
-				f.write('IP=' + self.IP + '\n')
-				f.write('NETMASK=' + self.netmask + '\n')
-				if self.gateway != '':
-					f.write('GATEWAY=' + self.gateway + '\n')
-				if self.dns != '':
-					f.write('DNS=' + self.dns + '\n')
-		finally:
-			f.close()
+		data = Ubuntu1204Data.Inst()
 
+		# update system network config file
+		conf = {
+			"device": self.device,
+			"configmode": self.mode
+		}
+		if self.mode.lower() == 'static':
+			conf["ipaddr"]  = self.IP
+			conf["netmask"] = self.netmask
+			conf["gateway"] = self.gateway
+			conf["dns"]     = self.dns
+		
+		Layout.Inst().TransientBanner(Lang('Network Reset...'))
+		(status, output) = data.UpdateNetConf(conf)
+		if status:
+			Layout.Inst().PushDialogue(InfoDialogue(Lang("Network Reset Successful"), output))
+		else:
+			XSLogFailure('Network Reset failed ', str(output))
+			Layout.Inst().PushDialogue(InfoDialogue(Lang("Network Reset failed"), output))
+		
 class XSFeatureNetworkReset:
 	@classmethod
 	def StatusUpdateHandler(cls, inPane):
